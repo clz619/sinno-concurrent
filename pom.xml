@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>win.sinno</groupId>
+    <artifactId>sinno-concurrent</artifactId>
+    <version>1.0.8</version>
+
+    <packaging>jar</packaging>
+
+    <description>
+
+    </description>
+
+    <properties>
+        <!--project-->
+        <project.encoding>UTF-8</project.encoding>
+        <version.java>1.7</version.java>
+
+        <!--unit-->
+        <version.junit>4.12</version.junit>
+
+        <!--common-->
+        <version.commons.lang3>3.4</version.commons.lang3>
+        <version.commons.collections4>4.1</version.commons.collections4>
+
+        <!--log-->
+        <version.slf4j.log4j12>1.7.22</version.slf4j.log4j12>
+
+        <!--plugin-->
+        <version.plugin.maven.compiler>3.5.1</version.plugin.maven.compiler>
+
+        <version.maven.jar>3.0.2</version.maven.jar>
+        <version.maven.dependency>2.10</version.maven.dependency>
+
+
+    </properties>
+
+    <dependencies>
+
+        <!-- junit-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${version.junit}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- apache common lang-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${version.commons.lang3}</version>
+        </dependency>
+        <!-- apache common collections-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>${version.commons.collections4}</version>
+        </dependency>
+
+        <!-- slf4j-->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${version.slf4j.log4j12}</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.plugin.maven.compiler}</version>
+                <configuration>
+                    <source>${version.java}</source>
+                    <target>${version.java}</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${version.maven.jar}</version>
+                <configuration>
+                    <outputDirectory>${project.basedir}/package</outputDirectory>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${version.maven.dependency}</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/libs</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>

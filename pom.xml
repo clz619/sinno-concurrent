@@ -11,7 +11,16 @@
     <packaging>jar</packaging>
 
     <description>
-
+        1.0.0 : Finish DataCenter multi deal collection data.
+        1.0.1 : IDataHandler add exception msg to DataCollectionResult's exception.
+        1.0.2 : LocalExecutorPool use Semaphore for get/set avaliable NamedExecutorService.
+        1.0.3 : Fix DataCenter get local executor null point exception.
+        1.0.4 : Add DataQueueCenter.
+        1.0.5 : DataQueueCenter add getFristTask interface.
+        Add TraceTimeLogger for monitor.
+        1.0.6 : Add TraceTimeLogger for monitor.
+        1.0.7 : Add IDataTeamConf for DataQueueCenter.
+        1.0.8 : [Add] DataQueueTeam add team timeout mechanism and get status.
     </description>
 
     <properties>

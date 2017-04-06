@@ -415,10 +415,12 @@ public class DataQueueTeam<DATA> implements Runnable {
                     }
 
                 } else if (dataQueueTeam.useTimeout) {
+
                     // 超时处理
                     Long maxTs = futureHandler.getBeginTs() + dataQueueTeam.timeout;
 
                     if (maxTs < System.currentTimeMillis()) {
+
                         //最大处理时间小于当前时间，则为处理超时，超时处理
                         if (!(future.isDone() || future.isCancelled())) {
 
@@ -427,12 +429,6 @@ public class DataQueueTeam<DATA> implements Runnable {
 
                             //执行取消
                             future.cancel(true);
-
-//                            //从队列中移除
-//                            futureIterator.remove();
-//
-//                            //队列team释放资源及统计
-//                            this.dataQueueTeam.releaseOneResource();
 
                             this.dataQueueTeam.timeoutCount.incrementAndGet();
                         }

@@ -1,8 +1,9 @@
 package win.sinno.concurrent.earthworm;
 
 import org.apache.commons.collections4.CollectionUtils;
-import win.sinno.concurrent.earthworm.custom.IDataTeamConf;
+import win.sinno.concurrent.CustomThreadFactory;
 import win.sinno.concurrent.earthworm.custom.IDataHandler;
+import win.sinno.concurrent.earthworm.custom.IDataTeamConf;
 
 import java.util.Collection;
 import java.util.Map;
@@ -49,9 +50,9 @@ public class DataQueueCenter {
     public DataQueueCenter(int queueNum, int poolType) {
         this.queueNum = queueNum;
         if (CACHED_THREAD_POOL_FLAG == poolType) {
-            executorService = Executors.newCachedThreadPool();
+            executorService = Executors.newCachedThreadPool(new CustomThreadFactory("dqc"));
         } else {
-            executorService = Executors.newFixedThreadPool(queueNum);
+            executorService = Executors.newFixedThreadPool(queueNum, new CustomThreadFactory("dqc"));
         }
     }
 

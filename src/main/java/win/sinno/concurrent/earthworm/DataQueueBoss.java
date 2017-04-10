@@ -33,7 +33,6 @@ public class DataQueueBoss<DATA> {
         //工作者数量
         this.workerCount = workerCount;
 
-
     }
 
     /**

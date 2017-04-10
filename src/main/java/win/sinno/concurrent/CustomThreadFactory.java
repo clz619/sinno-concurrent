@@ -25,7 +25,7 @@ public class CustomThreadFactory implements ThreadFactory {
         group = (s != null) ? s.getThreadGroup() :
                 Thread.currentThread().getThreadGroup();
 
-        namePrefix = name + "-pool-" +
+        namePrefix = "sinno-" + name + "-pool-" +
                 poolNumber.getAndIncrement() +
                 "-thread-";
     }

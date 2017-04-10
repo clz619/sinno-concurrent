@@ -3,6 +3,7 @@ package win.sinno.concurrent.earthworm;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import win.sinno.concurrent.CustomThreadFactory;
 import win.sinno.concurrent.earthworm.custom.IDataHandler;
 
 import java.text.SimpleDateFormat;
@@ -24,7 +25,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class DataQueueTeam<DATA> implements Runnable {
 
-    private static final Logger LOG = LoggerFactory.getLogger("earchworm");
+    private static final Logger LOG = LoggerFactory.getLogger("earthworm");
 
     /**
      * boss
@@ -124,10 +125,10 @@ public class DataQueueTeam<DATA> implements Runnable {
         this.workerCount = dataQueueBoss.getWorkerCount();
 
         //处理器服务，缓存线程池
-        this.executorService = Executors.newCachedThreadPool();
+        this.executorService = Executors.newCachedThreadPool(new CustomThreadFactory("dqt-" + name));
 
         //固定一个的线程池，维护future处理
-        this.futureExecutorService = Executors.newFixedThreadPool(1);
+        this.futureExecutorService = Executors.newFixedThreadPool(1, new CustomThreadFactory("dqt-" + name + "-ft"));
 
         //工人资源
         this.semaphore = new Semaphore(workerCount);

@@ -20,7 +20,7 @@ public class DataThreadFactory implements ThreadFactory {
         SecurityManager s = System.getSecurityManager();
         group = (s != null) ? s.getThreadGroup() :
                 Thread.currentThread().getThreadGroup();
-        namePrefix = "data-pool-[" + name + "]-" +
+        namePrefix = "da-pool-[" + name + "]-" +
                 poolNumber.getAndIncrement() +
                 "-thread-";
     }

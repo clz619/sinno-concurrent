@@ -6,7 +6,7 @@
 
     <groupId>win.sinno</groupId>
     <artifactId>sinno-concurrent</artifactId>
-    <version>1.0.8</version>
+    <version>1.0.9</version>
 
     <packaging>jar</packaging>
 
@@ -21,6 +21,7 @@
         1.0.6 : Add TraceTimeLogger for monitor.
         1.0.7 : Add IDataTeamConf for DataQueueCenter.
         1.0.8 : [Add] DataQueueTeam add team timeout mechanism and get status.
+        1.0.9 : [ADD] Add balloon with commons-pool to dynamic adjust pool size.
     </description>
 
     <properties>
@@ -34,7 +35,7 @@
         <!--common-->
         <version.commons.lang3>3.4</version.commons.lang3>
         <version.commons.collections4>4.1</version.commons.collections4>
-
+        <version.commons.pool2>2.4.2</version.commons.pool2>
         <!--log-->
         <version.slf4j.log4j12>1.7.22</version.slf4j.log4j12>
 
@@ -69,7 +70,12 @@
             <artifactId>commons-collections4</artifactId>
             <version>${version.commons.collections4}</version>
         </dependency>
-
+        <!--commons pool2-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>${version.commons.pool2}</version>
+        </dependency>
         <!-- slf4j-->
         <dependency>
             <groupId>org.slf4j</groupId>

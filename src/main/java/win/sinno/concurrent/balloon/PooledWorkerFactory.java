@@ -38,7 +38,7 @@ public class PooledWorkerFactory<DATA> implements PooledObjectFactory<IWorker<DA
 
     @Override
     public void destroyObject(PooledObject<IWorker<DATA>> p) throws Exception {
-        //
+
 //        LOG.info("destroy.{}", destroyCount.incrementAndGet());
     }
 

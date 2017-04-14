@@ -28,7 +28,7 @@ public class BossTest {
                     public void deal(String s) {
                         System.out.println(new Date() + ":" + s);
                         try {
-                            Thread.sleep(500l);
+                            Thread.sleep(5000l);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -38,18 +38,18 @@ public class BossTest {
         };
 
         BossConfig bossConfig = new BossConfig();
-        bossConfig.setMaxTotal(10);
+        bossConfig.setMaxTotal(8);
         bossConfig.setMaxIdle(6);
         bossConfig.setMinIdle(2);
-        bossConfig.setCheckTs(5000);
+        bossConfig.setCheckTs(3000);
         bossConfig.setSoftCheck(true);
-        bossConfig.setCheckIdleTs(10000);
-//        bossConfig.set
+        bossConfig.setCheckIdleTs(1000 * 2);
+
         bossConfig.setBlockWhenExhausted(true);
 
         Boss<String> boss = new Boss<String>("test", wokerFactory, bossConfig);
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 100; i++) {
             try {
                 boss.deal("" + i);
             } catch (Exception e) {

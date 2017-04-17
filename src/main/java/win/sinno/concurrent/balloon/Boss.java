@@ -39,7 +39,7 @@ public class Boss<DATA> {
 
     private GenericObjectPool<IWorker<DATA>> pool;
 
-    private ExecutorService service = Executors.newCachedThreadPool(new CustomThreadFactory("balloon-[" + name + "]"));
+    private ExecutorService service;
 
     public Boss(String name, IWokerFactory<DATA> workerFactory) {
         this(name, workerFactory, null);
@@ -81,10 +81,10 @@ public class Boss<DATA> {
         config.setTestOnCreate(true);
         config.setTestOnBorrow(true);
         config.setTestOnReturn(true);
-
         config.setJmxEnabled(false);
         pool = new GenericObjectPool<IWorker<DATA>>(factory, config);
 
+        service = Executors.newCachedThreadPool(new CustomThreadFactory("balloon-[" + name + "]"));
     }
 
     public int getMaxTotal() {

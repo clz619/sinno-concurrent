@@ -202,6 +202,9 @@ public class DataQueueTeam<DATA> implements Runnable {
         return this.dataQueueBoss.getTaskCount();
     }
 
+    public void clearTask() {
+        this.dataQueueBoss.clearTask();
+    }
 
     @Override
     public void run() {

@@ -71,6 +71,10 @@ public class DataQueueBoss<DATA> {
         return this.queue.size();
     }
 
+    void clearTask() {
+        this.queue.clear();
+    }
+
     /**
      * 获取一个任务，若没有则返回null
      *

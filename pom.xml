@@ -45,7 +45,6 @@
         <version.maven.jar>3.0.2</version.maven.jar>
         <version.maven.dependency>2.10</version.maven.dependency>
 
-
     </properties>
 
     <dependencies>
@@ -101,9 +100,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${version.maven.jar}</version>
-                <configuration>
-                    <outputDirectory>${project.basedir}/package</outputDirectory>
-                </configuration>
             </plugin>
 
             <plugin>
@@ -118,7 +114,7 @@
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.basedir}/libs</outputDirectory>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
@@ -129,5 +125,6 @@
 
         </plugins>
     </build>
+
 
 </project>

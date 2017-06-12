@@ -16,32 +16,31 @@ public class TwinsLockTest {
     public void testLock() throws InterruptedException {
         final TwinsLock twinsLock = new TwinsLock();
 
-        List<Thread> threadList = new ArrayList<>();
+        class Work extends Thread {
+            @Override
+            public void run() {
+                try {
+                    twinsLock.lock();
+                    System.out.println(Thread.currentThread().getName() + ":begin");
+                    Thread.sleep(3000l);
+                    System.out.println(Thread.currentThread().getName() + ":end");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    twinsLock.unlock();
+                }
+            }
+        }
+        List<Work> threadList = new ArrayList<Work>();
 
         for (int i = 0; i < 5; i++) {
-            threadList.add(new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        twinsLock.lock();
-                        System.out.println(Thread.currentThread().getName() + ":begin");
-                        Thread.sleep(3000l);
-                        System.out.println(Thread.currentThread().getName() + ":end");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        twinsLock.unlock();
-                    }
-
-                }
-            });
+            threadList.add(new Work());
         }
 
         for (int i = 0; i < threadList.size(); i++) {
             Thread t = threadList.get(i);
             t.start();
         }
-
 
         Thread.sleep(1000000l);
 

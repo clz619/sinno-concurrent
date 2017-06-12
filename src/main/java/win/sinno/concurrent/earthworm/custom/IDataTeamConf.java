@@ -26,6 +26,13 @@ public interface IDataTeamConf<DATA> {
     int getWorkerNum();
 
     /**
+     * 队列大小，队列会阻塞
+     *
+     * @return
+     */
+    int getQueueSize();
+
+    /**
      * 获取数据处理器
      *
      * @return

@@ -6,7 +6,7 @@
 
     <groupId>win.sinno</groupId>
     <artifactId>sinno-concurrent</artifactId>
-    <version>1.0.9</version>
+    <version>1.0.10</version>
 
     <packaging>jar</packaging>
 
@@ -22,6 +22,7 @@
         1.0.7 : Add IDataTeamConf for DataQueueCenter.
         1.0.8 : [Add] DataQueueTeam add team timeout mechanism and get status.
         1.0.9 : [ADD] Add balloon with commons-pool to dynamic adjust pool size.
+        1.0.10 : [OPT] DataQueueTeam use block queue to control memroy.
     </description>
 
     <properties>

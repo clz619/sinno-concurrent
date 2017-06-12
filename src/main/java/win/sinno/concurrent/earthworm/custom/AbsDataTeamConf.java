@@ -22,6 +22,11 @@ public abstract class AbsDataTeamConf<DATA> implements IDataTeamConf<DATA> {
     }
 
     @Override
+    public int getQueueSize() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
     public Boolean getUseTimeout() {
         return Boolean.FALSE;
     }

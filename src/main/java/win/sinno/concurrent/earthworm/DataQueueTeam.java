@@ -164,7 +164,11 @@ public class DataQueueTeam<DATA> implements Runnable {
      */
     public void addTask(DATA data) {
 
-        this.dataQueueBoss.dispathTask(data);
+        try {
+            this.dataQueueBoss.dispathTask(data);
+        } catch (InterruptedException e) {
+            LOG.error(e.getMessage(), e);
+        }
 
         this.totalCount.incrementAndGet();
     }
@@ -178,7 +182,11 @@ public class DataQueueTeam<DATA> implements Runnable {
 
         if (CollectionUtils.isNotEmpty(datas)) {
 
-            this.dataQueueBoss.dispathTasks(datas);
+            try {
+                this.dataQueueBoss.dispathTasks(datas);
+            } catch (InterruptedException e) {
+                LOG.error(e.getMessage(), e);
+            }
 
             this.totalCount.addAndGet(datas.size());
         }
@@ -215,42 +223,40 @@ public class DataQueueTeam<DATA> implements Runnable {
 
         while (this.workerFlag) {
 
-            if ((task = this.dataQueueBoss.getOneTask()) != null) {
+            try {
+                if ((task = this.dataQueueBoss.getOneTask()) != null) {
 
-                try {
-                    //获取资源
-                    acquireOneResource();
-                } catch (InterruptedException e) {
-                    LOG.error(e.getMessage(), e);
-                    continue;
+                    try {
+                        //获取资源
+                        acquireOneResource();
+                    } catch (InterruptedException e) {
+                        LOG.error(e.getMessage(), e);
+                        continue;
+                    }
+
+                    try {
+                        //处理结果
+                        Future future = this.executorService.submit(new DataQueueWorker<DATA>(this.dataHandler, task));
+
+                        //提交数，增加1
+                        this.submitCount.incrementAndGet();
+
+                        //处理结果列表
+                        this.futureDaemon.addFuture(task, future);
+
+                    } catch (Exception e) {
+
+                        LOG.error(e.getMessage(), e);
+
+                        //处理失败-进行资源释放
+                        releaseOneResource();
+
+                        this.failCount.incrementAndGet();
+                    }
+
                 }
-
-                try {
-                    //处理结果
-                    Future future = this.executorService.submit(new DataQueueWorker<DATA>(this.dataHandler, task));
-
-                    //提交数，增加1
-                    this.submitCount.incrementAndGet();
-
-                    //处理结果列表
-                    this.futureDaemon.addFuture(task, future);
-
-                } catch (Exception e) {
-
-                    LOG.error(e.getMessage(), e);
-
-                    //处理失败-进行资源释放
-                    releaseOneResource();
-
-                    this.failCount.incrementAndGet();
-                }
-
-            } else {
-                try {
-                    Thread.sleep(10l);
-                } catch (InterruptedException e) {
-                    //ingore
-                }
+            } catch (InterruptedException e) {
+                LOG.error(e.getMessage(), e);
             }
 
         }

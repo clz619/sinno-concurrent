@@ -87,6 +87,12 @@ public class DataQueueCenter {
      */
     public <DATA> DataQueueTeam<DATA> createDataQueueTeam(String teamName, int workerNum, IDataHandler<DATA> dataHandler, Boolean useTimeout, Long timeout) {
 
+        return createDataQueueTeam(teamName, workerNum, Integer.MAX_VALUE, dataHandler, Boolean.FALSE, 30000l);
+
+    }
+
+    public <DATA> DataQueueTeam<DATA> createDataQueueTeam(String teamName, int workerNum, int queueSize, IDataHandler<DATA> dataHandler, Boolean useTimeout, Long timeout) {
+
         //队列
         DataQueueTeam<DATA> dataQueueTeam = dataQueueTeamMap.get(teamName);
 
@@ -100,11 +106,11 @@ public class DataQueueCenter {
                 if (dataQueueTeam == null) {
 
                     if (workerNum < 1 || dataHandler == null) {
-                        throw new IllegalArgumentException("data queue team name:[" + teamName + "],workerNum:[" + workerNum + "],data handler:[" + dataHandler + "] param is not valid.");
+                        throw new IllegalArgumentException("data queue team name:[" + teamName + "],workerNum:[" + workerNum + "],queueSize:[" + queueSize + "],data handler:[" + dataHandler + "] param is not valid.");
                     }
 
                     //数据队列 - 添加超时选项
-                    dataQueueTeam = new DataQueueTeam(teamName, new DataQueueBoss(workerNum), dataHandler, useTimeout, timeout);
+                    dataQueueTeam = new DataQueueTeam(teamName, new DataQueueBoss(workerNum, queueSize), dataHandler, useTimeout, timeout);
 
                     //数据队列的队伍map
                     dataQueueTeamMap.put(teamName, dataQueueTeam);
@@ -129,7 +135,7 @@ public class DataQueueCenter {
     public <DATA> DataQueueTeam<DATA> createDataQueueTeam(String teamName, IDataTeamConf<DATA> dataTeamConf) {
 
         //创建数据队列team
-        return createDataQueueTeam(teamName, dataTeamConf.getWorkerNum(), dataTeamConf.getDataHandler(), dataTeamConf.getUseTimeout(), dataTeamConf.getTimeout());
+        return createDataQueueTeam(teamName, dataTeamConf.getWorkerNum(), dataTeamConf.getQueueSize(), dataTeamConf.getDataHandler(), dataTeamConf.getUseTimeout(), dataTeamConf.getTimeout());
     }
 
 
@@ -187,6 +193,7 @@ public class DataQueueCenter {
         String teamName = dataTeamConf.getTeamName(data);
 
         int workerNum = dataTeamConf.getWorkerNum();
+        int queueSize = dataTeamConf.getQueueSize();
         IDataHandler<DATA> dataHandler = dataTeamConf.getDataHandler();
 
         //是否使用超时
@@ -195,7 +202,7 @@ public class DataQueueCenter {
         Long timeout = dataTeamConf.getTimeout();
 
         //数据处理组
-        DataQueueTeam<DATA> dataQueueTeam = createDataQueueTeam(teamName, workerNum, dataHandler, useTimeout, timeout);
+        DataQueueTeam<DATA> dataQueueTeam = createDataQueueTeam(teamName, workerNum, queueSize, dataHandler, useTimeout, timeout);
 
         if (dataQueueTeam == null) {
             //组为null，抛出错误

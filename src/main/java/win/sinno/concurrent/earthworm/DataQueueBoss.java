@@ -1,8 +1,10 @@
 package win.sinno.concurrent.earthworm;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.util.Collection;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * 数据队列boss
@@ -16,23 +18,36 @@ public class DataQueueBoss<DATA> {
     /**
      * 队列
      */
-    private Queue<DATA> queue = new ConcurrentLinkedQueue<DATA>();
+    private BlockingQueue<DATA> queue;
 
     /**
      * 工作者数量
      */
     private int workerCount;
 
+    private int queueSize;
+
 
     public DataQueueBoss(int workerCount) throws IllegalArgumentException {
+
+        this(workerCount, Integer.MAX_VALUE);
+
+    }
+
+    public DataQueueBoss(int workerCount, int queueSize) throws IllegalArgumentException {
 
         if (workerCount <= 0) {
             throw new IllegalArgumentException("the boss can not no worker ,because the task need worker handler.your parameter is:[" + workerCount + "]");
         }
 
+        if (queueSize <= 0) {
+            throw new IllegalArgumentException("the boss can not queue ,because the task need worker handler.your parameter queueSize is:[" + queueSize + "]");
+        }
+
         //工作者数量
         this.workerCount = workerCount;
-
+        this.queueSize = queueSize;
+        this.queue = new LinkedBlockingQueue<DATA>(queueSize);
     }
 
     /**
@@ -40,8 +55,8 @@ public class DataQueueBoss<DATA> {
      *
      * @param data
      */
-    void dispathTask(DATA data) {
-        this.queue.add(data);
+    void dispathTask(DATA data) throws InterruptedException {
+        this.queue.put(data);
     }
 
     /**
@@ -49,8 +64,12 @@ public class DataQueueBoss<DATA> {
      *
      * @param datas
      */
-    void dispathTasks(Collection<DATA> datas) {
-        this.queue.addAll(datas);
+    void dispathTasks(Collection<DATA> datas) throws InterruptedException {
+        if (CollectionUtils.isNotEmpty(datas)) {
+            for (DATA data : datas) {
+                dispathTask(data);
+            }
+        }
     }
 
     /**
@@ -80,8 +99,8 @@ public class DataQueueBoss<DATA> {
      *
      * @return
      */
-    DATA getOneTask() {
-        return queue.poll();
+    DATA getOneTask() throws InterruptedException {
+        return queue.take();
     }
 
     public int getWorkerCount() {

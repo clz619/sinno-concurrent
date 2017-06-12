@@ -4,8 +4,8 @@ import org.junit.Test;
 import win.sinno.concurrent.earthworm.DataQueueCenter;
 import win.sinno.concurrent.earthworm.DataQueueTeam;
 import win.sinno.concurrent.earthworm.custom.AbsDataTeamConf;
-import win.sinno.concurrent.earthworm.custom.IDataTeamConf;
 import win.sinno.concurrent.earthworm.custom.IDataHandler;
+import win.sinno.concurrent.earthworm.custom.IDataTeamConf;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -146,6 +146,11 @@ public class DataQueueCenterTest {
                 return 4;
             }
 
+            @Override
+            public int getQueueSize() {
+                return 2;
+            }
+
             /**
              * 获取数据处理器
              *
@@ -158,10 +163,10 @@ public class DataQueueCenterTest {
                     public void handler(DataQueue data) throws InterruptedException {
                         int num = data.getNum();
 
-                        if (num % 10 == 0) {
+                        if (num % 2 == 0) {
                             // 余数
 
-                            Thread.sleep(6000l);
+                            Thread.sleep(1000l);
 
                         }
 
@@ -184,9 +189,9 @@ public class DataQueueCenterTest {
 
         List<DataQueue> dataQueueList = new ArrayList<DataQueue>();
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 100; i++) {
             DataQueue dataQueue = new DataQueue();
-            dataQueue.setName(String.valueOf(i % 10));
+            dataQueue.setName(String.valueOf(i % 2));
             dataQueue.setNum(i);
 
             dataQueueList.add(dataQueue);
@@ -195,6 +200,7 @@ public class DataQueueCenterTest {
         //数据queue
         dataQueueCenter.addTasks(dataQueueList, dataTeamConf);
 
+        System.out.println("add tasks finish.......");
         try {
             Thread.sleep(10000l);
 

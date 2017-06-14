@@ -34,27 +34,27 @@ public class AtomicCycleInteger extends Number implements java.io.Serializable {
     }
 
     public AtomicCycleInteger(int initValue) {
-        this.value = initValue;
         Validate.isTrue(initValue >= minValue, "initValue:[" + initValue + "] < minValue:[" + minValue + "]");
         Validate.isTrue(initValue <= maxValue, "initValue:[" + initValue + "] > maxValue:[" + maxValue + "]");
+
+        this.value = initValue;
     }
 
     public AtomicCycleInteger(int initValue, int maxValue) {
-        this.value = initValue;
-        this.maxValue = maxValue;
-
         Validate.isTrue(initValue >= minValue, "initValue:[" + initValue + "] < minValue:[" + minValue + "]");
         Validate.isTrue(initValue <= maxValue, "initValue:[" + initValue + "] > maxValue:[" + maxValue + "]");
+
+        this.value = initValue;
+        this.maxValue = maxValue;
     }
 
     public AtomicCycleInteger(int initValue, int minValue, int maxValue) {
-        this.value = initValue;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-
         Validate.isTrue(initValue >= minValue, "initValue:[" + initValue + "] < minValue:[" + minValue + "]");
         Validate.isTrue(initValue <= maxValue, "initValue:[" + initValue + "] > maxValue:[" + maxValue + "]");
 
+        this.value = initValue;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
     }
 
     /**
@@ -100,6 +100,7 @@ public class AtomicCycleInteger extends Number implements java.io.Serializable {
     public final int getAndSet(int newValue) {
         Validate.isTrue(newValue >= minValue, "newValue:[" + newValue + "] < minValue:[" + minValue + "]");
         Validate.isTrue(newValue <= maxValue, "newValue:[" + newValue + "] > maxValue:[" + maxValue + "]");
+
         for (; ; ) {
             int current = get();
             if (compareAndSet(current, newValue))

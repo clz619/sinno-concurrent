@@ -32,8 +32,9 @@ public class AtomicPositiveLong extends Number implements java.io.Serializable {
     }
 
     public AtomicPositiveLong(int initValue) {
-        this.value = initValue;
         Validate.isTrue(initValue >= 0, "initValue:[" + initValue + "] is not positive number");
+
+        this.value = initValue;
     }
 
 
@@ -134,13 +135,13 @@ public class AtomicPositiveLong extends Number implements java.io.Serializable {
      *
      * @return the previous value
      */
-    public final long getAndDecrement() {
+    public final Long getAndDecrement() {
         for (; ; ) {
             long current = get();
             long next = current - 1;
 
             if (next < 0) {
-                return -1;
+                return null;
             }
 
             if (compareAndSet(current, next))
@@ -154,13 +155,13 @@ public class AtomicPositiveLong extends Number implements java.io.Serializable {
      * @param delta the value to add
      * @return the previous value
      */
-    public final long getAndAdd(long delta) {
+    public final Long getAndAdd(long delta) {
         for (; ; ) {
             long current = get();
             long next = current + delta;
 
             if (next < 0) {
-                return -1;
+                return null;
             }
 
             if (compareAndSet(current, next))
@@ -188,13 +189,13 @@ public class AtomicPositiveLong extends Number implements java.io.Serializable {
      *
      * @return the updated value
      */
-    public final long decrementAndGet() {
+    public final Long decrementAndGet() {
         for (; ; ) {
             long current = get();
             long next = current - 1;
 
             if (next < 0) {
-                return -1;
+                return null;
             }
 
             if (compareAndSet(current, next))
@@ -208,13 +209,13 @@ public class AtomicPositiveLong extends Number implements java.io.Serializable {
      * @param delta the value to add
      * @return the updated value
      */
-    public final long addAndGet(long delta) {
+    public final Long addAndGet(long delta) {
         for (; ; ) {
             long current = get();
             long next = current + delta;
 
             if (next < 0) {
-                return -1;
+                return null;
             }
 
             if (compareAndSet(current, next))

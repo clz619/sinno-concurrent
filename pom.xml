@@ -23,6 +23,7 @@
         1.0.8 : [Add] DataQueueTeam add team timeout mechanism and get status.
         1.0.9 : [ADD] Add balloon with commons-pool to dynamic adjust pool size.
         1.0.10 : [OPT] DataQueueTeam use block queue to control memroy.
+        1.0.11 : [ADD] Add atomic util.
     </description>
 
     <properties>

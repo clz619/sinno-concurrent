@@ -1,10 +1,9 @@
 package win.sinno.concurrent.earthworm;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.commons.collections4.CollectionUtils;
 
 /**
  * 数据队列boss
@@ -15,100 +14,96 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class DataQueueBoss<DATA> {
 
-    /**
-     * 队列
-     */
-    private BlockingQueue<DATA> queue;
+  /**
+   * 队列
+   *
+   * http://www.infoq.com/cn/articles/java-blocking-queue/
+   */
+  private BlockingQueue<DATA> queue;
 
-    /**
-     * 工作者数量
-     */
-    private int workerCount;
+  /**
+   * 工作者数量
+   */
+  private int workerCount;
 
-    private int queueSize;
+  private int queueSize;
 
 
-    public DataQueueBoss(int workerCount) throws IllegalArgumentException {
+  public DataQueueBoss(int workerCount) throws IllegalArgumentException {
 
-        this(workerCount, Integer.MAX_VALUE);
+    this(workerCount, Integer.MAX_VALUE);
 
+  }
+
+  public DataQueueBoss(int workerCount, int queueSize) throws IllegalArgumentException {
+
+    if (workerCount <= 0) {
+      throw new IllegalArgumentException(
+          "the boss can not no worker ,because the task need worker handler.your parameter is:["
+              + workerCount + "]");
     }
 
-    public DataQueueBoss(int workerCount, int queueSize) throws IllegalArgumentException {
-
-        if (workerCount <= 0) {
-            throw new IllegalArgumentException("the boss can not no worker ,because the task need worker handler.your parameter is:[" + workerCount + "]");
-        }
-
-        if (queueSize <= 0) {
-            throw new IllegalArgumentException("the boss can not queue ,because the task need worker handler.your parameter queueSize is:[" + queueSize + "]");
-        }
-
-        //工作者数量
-        this.workerCount = workerCount;
-        this.queueSize = queueSize;
-        this.queue = new LinkedBlockingQueue<DATA>(queueSize);
+    if (queueSize <= 0) {
+      throw new IllegalArgumentException(
+          "the boss can not queue ,because the task need worker handler.your parameter queueSize is:["
+              + queueSize + "]");
     }
 
-    /**
-     * boss 分配任务
-     *
-     * @param data
-     */
-    void dispathTask(DATA data) throws InterruptedException {
-        this.queue.put(data);
-    }
+    //工作者数量
+    this.workerCount = workerCount;
+    this.queueSize = queueSize;
+    this.queue = new LinkedBlockingQueue<DATA>(queueSize);
+  }
 
-    /**
-     * boss 分配任务集合
-     *
-     * @param datas
-     */
-    void dispathTasks(Collection<DATA> datas) throws InterruptedException {
-        if (CollectionUtils.isNotEmpty(datas)) {
-            for (DATA data : datas) {
-                dispathTask(data);
-            }
-        }
-    }
+  /**
+   * boss 分配任务
+   */
+  void dispathTask(DATA data) throws InterruptedException {
+    this.queue.put(data);
+  }
 
-    /**
-     * 获取第一个task，不从队列中移除数据
-     *
-     * @return
-     */
-    DATA getFirstTask() {
-        return this.queue.peek();
+  /**
+   * boss 分配任务集合
+   */
+  void dispathTasks(Collection<DATA> datas) throws InterruptedException {
+    if (CollectionUtils.isNotEmpty(datas)) {
+      for (DATA data : datas) {
+        dispathTask(data);
+      }
     }
+  }
 
-    /**
-     * 队列长度
-     *
-     * @return
-     */
-    int getTaskCount() {
-        return this.queue.size();
-    }
+  /**
+   * 获取第一个task，不从队列中移除数据
+   */
+  DATA getFirstTask() {
+    return this.queue.peek();
+  }
 
-    void clearTask() {
-        this.queue.clear();
-    }
+  /**
+   * 队列长度
+   */
+  int getTaskCount() {
+    return this.queue.size();
+  }
 
-    /**
-     * 获取一个任务，若没有则返回null
-     *
-     * @return
-     */
-    DATA getOneTask() throws InterruptedException {
-        return queue.take();
-    }
+  void clearTask() {
+    this.queue.clear();
+  }
 
-    public int getWorkerCount() {
-        return workerCount;
-    }
+  /**
+   * 获取一个任务，若没有则返回null
+   */
+  DATA getOneTask() throws InterruptedException {
+    return queue.take();
+  }
 
-    public void setWorkerCount(int workerCount) {
-        this.workerCount = workerCount;
-    }
+  public int getWorkerCount() {
+    return workerCount;
+  }
+
+  public void setWorkerCount(int workerCount) {
+    this.workerCount = workerCount;
+  }
 
 }

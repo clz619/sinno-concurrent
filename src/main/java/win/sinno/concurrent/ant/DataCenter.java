@@ -1,17 +1,14 @@
 package win.sinno.concurrent.ant;
 
-import win.sinno.concurrent.ant.custom.IDataHandlerWithoutRet;
-import win.sinno.concurrent.ant.custom.IDataHandler;
-import win.sinno.concurrent.ant.custom.SliceFunc;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import win.sinno.concurrent.ant.custom.IDataHandler;
+import win.sinno.concurrent.ant.custom.IDataHandlerWithoutRet;
+import win.sinno.concurrent.ant.custom.SliceFunc;
 
 /**
- * TODO
- * 优化-
- * 可以设置,不需要数据返回,执行完一个便移除，便于内存释放
+ * TODO 优化- 可以设置,不需要数据返回,执行完一个便移除，便于内存释放
  *
  * @author : admin@chenlizhong.cn
  * @version : 1.0
@@ -20,109 +17,100 @@ import java.util.Map;
 public class DataCenter {
 
 
-    //本地执行线程池map
-    private static Map<String, LocalExecutorPool> localExecutorPoolMap = new HashMap<String, LocalExecutorPool>();
+  //本地执行线程池map
+  private static Map<String, LocalExecutorPool> localExecutorPoolMap = new HashMap<String, LocalExecutorPool>();
 
-    private DataCenter() {
+  private DataCenter() {
 
-    }
+  }
 
-    private static class DataCenterHolder {
-        private static final DataCenter HOLDER = new DataCenter();
-    }
+  private static class DataCenterHolder {
 
-    public static DataCenter getInstance() {
-        return DataCenterHolder.HOLDER;
-    }
+    private static final DataCenter HOLDER = new DataCenter();
+  }
 
-    public LocalExecutorPool addLocalExecutorPool(String name, int poolSize, int poolThreadNum) {
-        //设置本地线程池-
-        LocalExecutorPool localExecutorPool = new LocalExecutorPool(poolSize, poolThreadNum);
+  public static DataCenter getInstance() {
+    return DataCenterHolder.HOLDER;
+  }
 
-        localExecutorPoolMap.put(name, localExecutorPool);
+  public LocalExecutorPool addLocalExecutorPool(String name, int poolSize, int poolThreadNum) {
+    // 设置本地线程池-
+    LocalExecutorPool localExecutorPool = new LocalExecutorPool(poolSize, poolThreadNum);
 
-        return localExecutorPool;
-    }
+    localExecutorPoolMap.put(name, localExecutorPool);
 
-    //LOCK MAP
+    return localExecutorPool;
+  }
 
-    private static Map<String, Object> LOCK_MAP = new HashMap<String, Object>();
+  //LOCK MAP
 
-    public LocalExecutorPool getLocalExecutorPool(String name, int workerSize, int threadNum) {
+  private static Map<String, Object> LOCK_MAP = new HashMap<String, Object>();
 
-        LocalExecutorPool localExecutorPool = localExecutorPoolMap.get(name);
+  public LocalExecutorPool getLocalExecutorPool(String name, int workerSize, int threadNum) {
 
-        synchronized (name) {
-            if (localExecutorPool == null) {
-                localExecutorPool = localExecutorPoolMap.get(name);
-                if (localExecutorPool == null) {
-                    localExecutorPool = addLocalExecutorPool(name, workerSize, threadNum);
-                }
-            }
+    LocalExecutorPool localExecutorPool = localExecutorPoolMap.get(name);
+
+    if (localExecutorPool == null) {
+      synchronized (this) {
+        localExecutorPool = localExecutorPoolMap.get(name);
+        if (localExecutorPool == null) {
+          localExecutorPool = addLocalExecutorPool(name, workerSize, threadNum);
         }
-
-        return localExecutorPool;
+      }
     }
 
-    /**
-     * 分批处理
-     *
-     * @param name        业务唯独线程池
-     * @param datas       处理数据
-     * @param workerSize  单个业务的线程池量
-     * @param sliceFunc   分段功能
-     * @param dataHandler 数据处理器
-     * @param <DATA>      数据类型
-     * @param <RET>       返回类型
-     * @return
-     * @throws Exception
-     */
-    public <DATA, RET> DataCollectionResult<DATA, RET> exec(String name, Collection<DATA> datas, int workerSize, SliceFunc<DATA> sliceFunc, IDataHandler<DATA, RET> dataHandler) throws Exception {
+    return localExecutorPool;
+  }
 
-        LocalExecutorPool localExecutorPool = getLocalExecutorPool(name, workerSize, 0);
+  /**
+   * 分批处理
+   *
+   * @param name 业务唯独线程池
+   * @param datas 处理数据
+   * @param workerSize 单个业务的线程池量
+   * @param sliceFunc 分段功能
+   * @param dataHandler 数据处理器
+   * @param <DATA> 数据类型
+   * @param <RET> 返回类型
+   */
+  public <DATA, RET> DataCollectionResult<DATA, RET> exec(String name, Collection<DATA> datas,
+      int workerSize, SliceFunc<DATA> sliceFunc, IDataHandler<DATA, RET> dataHandler)
+      throws Exception {
 
-        DataMultiWorker<DATA, RET> dataMultiWorker = new DataMultiWorker<DATA, RET>(datas, new DataSlicer<DATA>(sliceFunc), workerSize, dataHandler, localExecutorPool);
+    LocalExecutorPool localExecutorPool = getLocalExecutorPool(name, workerSize, 0);
 
-        return dataMultiWorker.call();
-    }
+    DataMultiWorker<DATA, RET> dataMultiWorker = new DataMultiWorker<DATA, RET>(datas,
+        new DataSlicer<DATA>(sliceFunc), workerSize, dataHandler, localExecutorPool);
+
+    return dataMultiWorker.call();
+  }
 
 
-    /**
-     * 执行不返回结果
-     *
-     * @param name
-     * @param datas
-     * @param workerSize
-     * @param sliceFunc
-     * @param dataHandler
-     * @param <DATA>
-     * @throws Exception
-     */
-    public <DATA> void exec(String name, Collection<DATA> datas, int workerSize, SliceFunc<DATA> sliceFunc, IDataHandlerWithoutRet<DATA> dataHandler) throws Exception {
+  /**
+   * 执行不返回结果
+   */
+  public <DATA> void exec(String name, Collection<DATA> datas, int workerSize,
+      SliceFunc<DATA> sliceFunc, IDataHandlerWithoutRet<DATA> dataHandler) throws Exception {
 
-        LocalExecutorPool localExecutorPool = getLocalExecutorPool(name, workerSize, 0);
+    LocalExecutorPool localExecutorPool = getLocalExecutorPool(name, workerSize, 0);
 
-        DataMultiWorkerWithoutRet<DATA> dataMultiWorker = new DataMultiWorkerWithoutRet<DATA>(datas, new DataSlicer<DATA>(sliceFunc), workerSize, dataHandler, localExecutorPool);
+    DataMultiWorkerWithoutRet<DATA> dataMultiWorker = new DataMultiWorkerWithoutRet<DATA>(datas,
+        new DataSlicer<DATA>(sliceFunc), workerSize, dataHandler, localExecutorPool);
 
-        dataMultiWorker.call();
+    dataMultiWorker.call();
 
-    }
+  }
 
-    /**
-     * 执行单条
-     *
-     * @param data
-     * @param <DATA>
-     * @param <RET>
-     * @return
-     */
-    @Deprecated
-    private <DATA, RET> RET exec(DATA data) {
+  /**
+   * 执行单条
+   */
+  @Deprecated
+  private <DATA, RET> RET exec(DATA data) {
 
-        //TODO add data single worker
+    //TODO add data single worker
 
-        return null;
-    }
+    return null;
+  }
 
 
 }

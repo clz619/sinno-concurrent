@@ -1,13 +1,16 @@
 package win.sinno.concurrent.ant;
 
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 本地多线程池,包含多个线程池，根据业务及批次进行分批执行
@@ -18,248 +21,243 @@ import java.util.concurrent.*;
  */
 public class LocalExecutorPool {
 
-    private static final Logger LOG = LoggerFactory.getLogger("ant");
+  private static final Logger LOG = LoggerFactory.getLogger("ant");
 
-    private static final int DEFAULT_POOL_SIZE = 4;
+  private static final int DEFAULT_POOL_SIZE = 4;
 
-    //选线程执行map
-    private Map<String, ExecutorService> executorServiceMap = new ConcurrentHashMap<String, ExecutorService>();
+  //选线程执行map
+  private Map<String, ExecutorService> executorServiceMap = new ConcurrentHashMap<String, ExecutorService>();
 
-    //正在进行中
-    private Queue<NamedExecutorService> doingExecutorServiceQueue = new ConcurrentLinkedQueue<NamedExecutorService>();
+  //正在进行中
+  private Queue<NamedExecutorService> doingExecutorServiceQueue = new ConcurrentLinkedQueue<NamedExecutorService>();
 
-    //等待执行
-    private Queue<NamedExecutorService> waitExecutorServiceQueue = new ConcurrentLinkedQueue<NamedExecutorService>();
+  //等待执行
+  private Queue<NamedExecutorService> waitExecutorServiceQueue = new ConcurrentLinkedQueue<NamedExecutorService>();
 
-    private Semaphore semaphore;
+  private Semaphore semaphore;
 
-    private NamedExecutorService mainExecutorService;
+  private NamedExecutorService mainExecutorService;
 
-    //池大小,(默认为4)
-    private int poolSize;
+  //池大小,(默认为4)
+  private int poolSize;
 
-    /**
-     * 获取有效池-锁
-     */
-    private Object GET_AVAILABLE_EXEC_LOCK = new Object();
+  /**
+   * 获取有效池-锁
+   */
+  private Object GET_AVAILABLE_EXEC_LOCK = new Object();
 
-    /**
-     * 设置有效池-锁
-     */
-    private Object SET_AVAILABLE_EXEC_LOCK = new Object();
+  /**
+   * 设置有效池-锁
+   */
+  private Object SET_AVAILABLE_EXEC_LOCK = new Object();
 
-    public LocalExecutorPool() {
-        //池大小为有效核心数
-        this(DEFAULT_POOL_SIZE, Runtime.getRuntime().availableProcessors());
+  public LocalExecutorPool() {
+    //池大小为有效核心数
+    this(DEFAULT_POOL_SIZE, Runtime.getRuntime().availableProcessors());
+  }
+
+  public LocalExecutorPool(int poolSize) {
+    //池大小为有效核心数
+    this(poolSize, Runtime.getRuntime().availableProcessors());
+  }
+
+  public LocalExecutorPool(int poolSize, int threadNum) {
+    if (poolSize < 1) {
+      //非法参数
+      throw new IllegalArgumentException("pool size:" + poolSize + " is illegal argument");
+    }
+    if (threadNum < 1) {
+      //非法参数
+      threadNum = Runtime.getRuntime().availableProcessors();
     }
 
-    public LocalExecutorPool(int poolSize) {
-        //池大小为有效核心数
-        this(poolSize, Runtime.getRuntime().availableProcessors());
+    this.poolSize = poolSize;
+
+    for (int i = 0; i < poolSize; i++) {
+      String key = String.valueOf(i);
+
+      addExecutorService(key, threadNum);
     }
 
-    public LocalExecutorPool(int poolSize, int threadNum) {
-        if (poolSize < 1) {
-            //非法参数
-            throw new IllegalArgumentException("pool size:" + poolSize + " is illegal argument");
-        }
-        if (threadNum < 1) {
-            //非法参数
-            threadNum = Runtime.getRuntime().availableProcessors();
-        }
+    //信号量为线程池数量-
+    semaphore = new Semaphore(poolSize);
 
-        this.poolSize = poolSize;
-
-        for (int i = 0; i < poolSize; i++) {
-            String key = String.valueOf(i);
-
-            addExecutorService(key, threadNum);
-        }
-
-        //信号量为线程池数量-
-        semaphore = new Semaphore(poolSize);
-
-        //使用缓存队列
+    //使用缓存队列
 //        ExecutorService executorService = Executors.newCachedThreadPool(new DataThreadFactory("main"));
 //        mainExecutorService = new NamedExecutorService("main", executorService);
 
-        //主控线程数以最大的线程池数量来限定
-        mainExecutorService = new NamedExecutorService("main", Executors.newFixedThreadPool(poolSize, new DataThreadFactory("main")));
+    //主控线程数以最大的线程池数量来限定
+    mainExecutorService = new NamedExecutorService("main",
+        Executors.newFixedThreadPool(poolSize, new DataThreadFactory("main")));
 
-        LOG.info("new main NamedExecutorService name:{},poolSize:{}", new Object[]{"main", poolSize});
-    }
+    LOG.info("new main NamedExecutorService name:{},poolSize:{}", new Object[]{"main", poolSize});
+  }
 
 
-    /**
-     * 添加线程服务
-     *
-     * @param name
-     * @param threadNum
-     */
-    private synchronized void addExecutorService(String name, int threadNum) {
+  /**
+   * 添加线程服务
+   */
+  private synchronized void addExecutorService(String name, int threadNum) {
 
-        ExecutorService executorService = Executors.newFixedThreadPool(threadNum, new DataThreadFactory(name));
+    ExecutorService executorService = Executors
+        .newFixedThreadPool(threadNum, new DataThreadFactory(name));
 
-        executorServiceMap.put(name, executorService);
+    executorServiceMap.put(name, executorService);
 
-        waitExecutorServiceQueue.add(new NamedExecutorService(name, executorService));
+    waitExecutorServiceQueue.add(new NamedExecutorService(name, executorService));
 
-        LOG.info("add executor service name:{},thread num:{}", new Object[]{name, threadNum});
-    }
+    LOG.info("add executor service name:{},thread num:{}", new Object[]{name, threadNum});
+  }
 
-    /**
-     * 获取执行服务
-     *
-     * @param name
-     * @return
-     */
-    public ExecutorService getExecutorService(String name) {
-        return executorServiceMap.get(name);
-    }
+  /**
+   * 获取执行服务
+   */
+  public ExecutorService getExecutorService(String name) {
+    return executorServiceMap.get(name);
+  }
 
-    /**
-     * 获取线程池名称
-     *
-     * @return
-     */
-    public Set<String> getExecutorNames() {
-        return executorServiceMap.keySet();
-    }
+  /**
+   * 获取线程池名称
+   */
+  public Set<String> getExecutorNames() {
+    return executorServiceMap.keySet();
+  }
 
-    /**
-     * 获取主线程池执行器
-     *
-     * @return
-     */
-    public NamedExecutorService getMainExecutorService() {
-        return mainExecutorService;
-    }
+  /**
+   * 获取主线程池执行器
+   */
+  public NamedExecutorService getMainExecutorService() {
+    return mainExecutorService;
+  }
 
-    /**
-     * 获取有效执行服务-//对于类型单独增加处理线程池-指定处理数据，防止数据处理过慢
-     *
-     * @return
-     */
-    public NamedExecutorService getAvailableExecutorService() throws InterruptedException {
+  /**
+   * 获取有效执行服务-//对于类型单独增加处理线程池-指定处理数据，防止数据处理过慢
+   */
+  public NamedExecutorService getAvailableExecutorService() throws InterruptedException {
 
-        NamedExecutorService namedExecutorService = null;
+    NamedExecutorService namedExecutorService = null;
 
-        synchronized (GET_AVAILABLE_EXEC_LOCK) {
+    synchronized (GET_AVAILABLE_EXEC_LOCK) {
 
-            semaphore.acquire();
+      semaphore.acquire();
 
-            while (namedExecutorService == null) {
-                //命名的线程池服务为空
-                //从等待处理服务队列中获取处理服务
-                namedExecutorService = waitExecutorServiceQueue.poll();
+      while (namedExecutorService == null) {
+        //命名的线程池服务为空
+        //从等待处理服务队列中获取处理服务
+        namedExecutorService = waitExecutorServiceQueue.poll();
 
-                try {
-                    if (namedExecutorService == null) {
-                        //如果为空则休眠10ms
-                        Thread.sleep(10l);
-                    }
-                } catch (InterruptedException e) {
-                    //ingore
-                }
+        try {
+          if (namedExecutorService == null) {
+            //如果为空则休眠10ms
 
-            }
-
-            //丢入正在处理服务队列
-            doingExecutorServiceQueue.add(namedExecutorService);
-
-            LOG.info("get name:{} executor service for doing", new Object[]{namedExecutorService.getName()});
-
-            //执行服务
-            return namedExecutorService;
+//            Thread.sleep(10L);
+            GET_AVAILABLE_EXEC_LOCK.wait(10L);
+          }
+        } catch (InterruptedException e) {
+          //ingore
+          LOG.info(e.getMessage(), e);
+          Thread.currentThread().interrupt();
         }
 
+      }
+
+      //丢入正在处理服务队列
+      doingExecutorServiceQueue.add(namedExecutorService);
+
+      LOG.info("get name:{} executor service for doing",
+          new Object[]{namedExecutorService.getName()});
+
+      //执行服务
+      return namedExecutorService;
     }
 
-    /**
-     * 设置有效执行服务
-     *
-     * @param namedExecutorService
-     */
-    public void setAvailableExecutorService(NamedExecutorService namedExecutorService) {
+  }
 
-        synchronized (SET_AVAILABLE_EXEC_LOCK) {
+  /**
+   * 设置有效执行服务
+   */
+  public void setAvailableExecutorService(NamedExecutorService namedExecutorService) {
 
-            boolean flag = doingExecutorServiceQueue.remove(namedExecutorService);
+    synchronized (SET_AVAILABLE_EXEC_LOCK) {
 
-            if (flag) {
+      boolean flag = doingExecutorServiceQueue.remove(namedExecutorService);
 
-                waitExecutorServiceQueue.add(namedExecutorService);
+      if (flag) {
 
-                LOG.info("set name:{} executor service for available", new Object[]{namedExecutorService.getName()});
+        waitExecutorServiceQueue.add(namedExecutorService);
 
-                //释放信号量
-                semaphore.release();
-            }
-        }
+        LOG.info("set name:{} executor service for available",
+            new Object[]{namedExecutorService.getName()});
+
+        //释放信号量
+        semaphore.release();
+      }
+    }
+
+  }
+
+  /**
+   * 被命名的线程池服务
+   */
+  static class NamedExecutorService {
+
+    private String name;
+    private ExecutorService executorService;
+
+    public NamedExecutorService(String name, ExecutorService executorService)
+        throws IllegalArgumentException {
+
+      if (StringUtils.isEmpty(name)) {
+        LOG.error("name can not null");
+        throw new IllegalArgumentException("name can not null");
+      }
+      if (executorService == null) {
+        LOG.error("executor service can not null");
+        throw new IllegalArgumentException("executor service can not null");
+      }
+
+      this.name = name;
+      this.executorService = executorService;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public ExecutorService getExecutorService() {
+      return executorService;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+      if (obj == null) {
+        return false;
+      }
+
+      if (!(obj instanceof NamedExecutorService)) {
+        return false;
+      }
+
+      if (this.hashCode() != obj.hashCode()) {
+        return false;
+      }
+
+      NamedExecutorService other = (NamedExecutorService) obj;
+
+      //名称是否相等
+      return this.getName().equals(other.getName());
 
     }
 
-    /**
-     * 被命名的线程池服务
-     */
-    static class NamedExecutorService {
-
-        private String name;
-        private ExecutorService executorService;
-
-        public NamedExecutorService(String name, ExecutorService executorService) throws IllegalArgumentException {
-
-            if (StringUtils.isEmpty(name)) {
-                LOG.error("name can not null");
-                throw new IllegalArgumentException("name can not null");
-            }
-            if (executorService == null) {
-                LOG.error("executor service can not null");
-                throw new IllegalArgumentException("executor service can not null");
-            }
-
-            this.name = name;
-            this.executorService = executorService;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public ExecutorService getExecutorService() {
-            return executorService;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-
-            if (obj == null) {
-                return false;
-            }
-
-            if (!(obj instanceof NamedExecutorService)) {
-                return false;
-            }
-
-            if (this.hashCode() != obj.hashCode()) {
-                return false;
-            }
-
-            NamedExecutorService other = (NamedExecutorService) obj;
-
-            //名称是否相等
-            return this.getName().equals(other.getName());
-
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 17;
-            if (name != null) {
-                hash = hash * 31 + name.hashCode() - 1;
-            }
-            return hash;
-        }
+    @Override
+    public int hashCode() {
+      int hash = 17;
+      if (name != null) {
+        hash = hash * 31 + name.hashCode() - 1;
+      }
+      return hash;
     }
+  }
 
 }

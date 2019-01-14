@@ -12,35 +12,38 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class CustomThreadFactory implements ThreadFactory {
 
-    private static final AtomicInteger poolNumber = new AtomicInteger(1);
-    private final ThreadGroup group;
-    private final AtomicInteger threadNumber = new AtomicInteger(1);
-    private final String namePrefix;
+  private static final AtomicInteger poolNumber = new AtomicInteger(1);
+  private final ThreadGroup group;
+  private final AtomicInteger threadNumber = new AtomicInteger(1);
+  private final String namePrefix;
 
 
-    public CustomThreadFactory(String name) {
+  public CustomThreadFactory(String name) {
 
-        SecurityManager s = System.getSecurityManager();
+    SecurityManager s = System.getSecurityManager();
 
-        group = (s != null) ? s.getThreadGroup() :
-                Thread.currentThread().getThreadGroup();
+    group = (s != null) ? s.getThreadGroup() :
+        Thread.currentThread().getThreadGroup();
 
-        namePrefix = "sinno-" + name + "-pool-" +
-                poolNumber.getAndIncrement() +
-                "-thread-";
+    namePrefix = "sinno-" + name + "-pool-" +
+        poolNumber.getAndIncrement() +
+        "-thread-";
+  }
+
+  @Override
+  public Thread newThread(Runnable r) {
+
+    Thread t = new Thread(group, r,
+        namePrefix + threadNumber.getAndIncrement(),
+        0);
+
+    if (t.isDaemon()) {
+      t.setDaemon(false);
     }
-
-    public Thread newThread(Runnable r) {
-
-        Thread t = new Thread(group, r,
-                namePrefix + threadNumber.getAndIncrement(),
-                0);
-
-        if (t.isDaemon())
-            t.setDaemon(false);
-        if (t.getPriority() != Thread.NORM_PRIORITY)
-            t.setPriority(Thread.NORM_PRIORITY);
-        return t;
+    if (t.getPriority() != Thread.NORM_PRIORITY) {
+      t.setPriority(Thread.NORM_PRIORITY);
     }
+    return t;
+  }
 
 }
